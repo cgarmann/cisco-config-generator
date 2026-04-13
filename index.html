@@ -143,6 +143,7 @@
       <select id="presetSel"></select>
       <button class="btn btn-ghost btn-sm" id="loadPresetBtn">Load</button>
       <button class="btn btn-blue  btn-sm" id="savePresetBtn">Save</button>
+      <button class="btn btn-ghost btn-sm" id="clearBtn"    title="Reset to blank project">✕ Clear</button>
       <button class="btn btn-ghost btn-sm" id="exportBtn"   title="Export project as JSON">↓ Export</button>
       <label  class="btn btn-ghost btn-sm" title="Import project from JSON" style="cursor:pointer;margin:0;">
         ↑ Import<input type="file" accept=".json" id="importFile" style="display:none;" />
@@ -1076,6 +1077,7 @@ function importProject(file){
 // ═══════════════════════════════════════════════
 //  EVENTS
 // ═══════════════════════════════════════════════
+document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Reset to blank project?'))loadPreset('blank');});
 document.getElementById('addLocBtn').addEventListener('click',()=>addLocation());
 document.getElementById('generateBtn').addEventListener('click',generate);
 document.getElementById('addWanBtn').addEventListener('click',addManualWan);
