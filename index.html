@@ -80,6 +80,10 @@
     .btn-orange { background: var(--orange); color: #000; }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
 
+    #clearBtn { position: relative; overflow: hidden; user-select: none; }
+    #clearBtn::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--red); opacity: 0.35; transition: none; border-radius: var(--r); }
+    #clearBtn.holding::after { width: 100%; transition: width 1.5s linear; }
+
     .toggle-group { display: flex; background: var(--s3); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
     .toggle-opt { flex: 1; padding: 7px 10px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--muted); transition: all .15s; white-space: nowrap; }
     .toggle-opt.active { background: var(--green); color: #000; }
@@ -1077,7 +1081,23 @@ function importProject(file){
 // ═══════════════════════════════════════════════
 //  EVENTS
 // ═══════════════════════════════════════════════
-document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Reset to blank project?'))loadPreset('blank');});
+(()=>{
+  const btn=document.getElementById('clearBtn');
+  let timer=null;
+  function startHold(){
+    btn.classList.add('holding');
+    timer=setTimeout(()=>{ loadPreset('blank'); btn.classList.remove('holding'); },1500);
+  }
+  function cancelHold(){
+    clearTimeout(timer); timer=null;
+    btn.classList.remove('holding');
+  }
+  btn.addEventListener('mousedown', startHold);
+  btn.addEventListener('mouseup',   cancelHold);
+  btn.addEventListener('mouseleave',cancelHold);
+  btn.addEventListener('touchstart', e=>{e.preventDefault();startHold();},{passive:false});
+  btn.addEventListener('touchend',  cancelHold);
+})();
 document.getElementById('addLocBtn').addEventListener('click',()=>addLocation());
 document.getElementById('generateBtn').addEventListener('click',generate);
 document.getElementById('addWanBtn').addEventListener('click',addManualWan);
