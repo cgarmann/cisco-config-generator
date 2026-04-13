@@ -34,7 +34,7 @@ Download [`index.html`](index.html) and open it in any modern browser.
 
 ### Option B — GitHub Pages
 Visit the live version at:
-**https://[your-username].github.io/cisco-config-generator/**
+**https://cgarmann.github.io/cisco-config-generator/**
 
 ---
 
