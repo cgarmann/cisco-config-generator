@@ -1002,29 +1002,12 @@ const BUILTIN_PRESETS = {
         {name:'Developers & Sales',       switchName:'SW-BOD-3',gwIp:'192.168.6.1',devices:[{type:'PC',count:4},{type:'Laptop',count:1}]},
       ]},
     ]},
-  l3demo:{label:'L3 Switch Demo (3560)',routingProtocol:'ospf',
-    locations:[
-      {name:'HQ',routerName:'Router-HQ',routerModel:'ISR4331',switchType:'l3',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[
-        {name:'Management', switchName:'SW-HQ-MGMT',gwIp:'192.168.1.1',devices:[{type:'PC',count:2},{type:'Printer',count:1}]},
-        {name:'Servers',    switchName:'SW-HQ-SRV', gwIp:'192.168.2.1',devices:[{type:'Server',count:2}]},
-        {name:'Employees',  switchName:'SW-HQ-EMP', gwIp:'192.168.3.1',devices:[{type:'Laptop',count:4},{type:'IP Phone',count:2}]},
-      ]},
-      {name:'BRANCH',routerName:'Router-BR',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[
-        {name:'Branch Office',switchName:'SW-BR-1',gwIp:'192.168.10.1',devices:[{type:'PC',count:3},{type:'IP Phone',count:1}]},
-      ]},
-    ]},
-  chain3:{label:'3-location chain (OSPF)',routingProtocol:'ospf',
-    locations:[
-      {name:'OSLO',     routerName:'Router-OSL',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[{name:'Oslo Office',  switchName:'SW-OSL-1',gwIp:'192.168.1.1',devices:[{type:'PC',count:3},{type:'Laptop',count:1}]}]},
-      {name:'BERGEN',   routerName:'Router-BGO',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[{name:'Bergen Office',switchName:'SW-BGO-1',gwIp:'192.168.2.1',devices:[{type:'Laptop',count:2},{type:'PC',count:1}]}]},
-      {name:'TRONDHEIM',routerName:'Router-TRD',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[{name:'TRD Office',  switchName:'SW-TRD-1',gwIp:'192.168.3.1',devices:[{type:'PC',count:2},{type:'IP Phone',count:1}]}]},
-    ]},
 };
 
 function populatePresetDropdown(){
   const sel=document.getElementById('presetSel');
   let h='<option value="">-- select preset --</option><optgroup label="Built-in">';
-  Object.entries(BUILTIN_PRESETS).forEach(([k,p])=>h+=`<option value="${k}">${p.label}</option>`);
+  Object.entries(BUILTIN_PRESETS).filter(([k])=>k!=='blank').forEach(([k,p])=>h+=`<option value="${k}">${p.label}</option>`);
   h+='</optgroup>';
   const custom=getCustomPresets();
   if(custom.length){h+='<optgroup label="My presets">'; custom.forEach(p=>h+=`<option value="${p.key}">★ ${p.name}</option>`); h+='</optgroup>';}
