@@ -3,182 +3,1152 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cisco Config Generator</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Cisco Config Generator v7</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #080c10; --s1: #0e1318; --s2: #141b22; --s3: #1c252f;
+      --border:  #243040; --text: #dce8f0; --muted: #6a8090;
+      --green:   #00e5a0; --green-d: #00301f;
+      --blue:    #4da6ff; --orange: #f0a040; --red: #ff5555; --r: 7px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--s1); flex-shrink: 0; }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--green); letter-spacing: 2px; }
+    .logo span { color: var(--muted); }
+    .tagline { font-size: 12px; color: var(--muted); }
+    .header-pills { margin-left: auto; display: flex; gap: 8px; }
+    .pill { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+    .pill.active { background: var(--green-d); color: var(--green); border-color: var(--green); }
+
+    .app { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 53px); }
+    .left { width: 420px; min-width: 280px; overflow-y: auto; border-right: none; display: flex; flex-direction: column; }
+    .resizer { width: 5px; background: var(--border); cursor: col-resize; flex-shrink: 0; transition: background .15s; }
+    .resizer:hover, .resizer.dragging { background: var(--blue); }
+    .right { flex: 1; min-width: 260px; display: flex; flex-direction: column; overflow: hidden; border-left: 1px solid var(--border); }
+
+    .section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .section-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+    .section-head .count { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--s3); color: var(--blue); border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .row4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+    .field { margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    input, select { width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: var(--r); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 8px 10px; transition: border-color .15s; }
+    input:focus, select:focus { outline: none; border-color: var(--blue); }
+    input::placeholder { color: var(--muted); }
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+    .hint { font-size: 10px; color: var(--muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+
+    .card { background: var(--s2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; margin-bottom: 8px; }
+    .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .card-badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--green-d); color: var(--green); border: 1px solid rgba(0,229,160,.25); }
+    .card-badge.blue   { background: #0a1e35; color: var(--blue);   border-color: rgba(77,166,255,.25); }
+    .card-badge.orange { background: #2a1a00; color: var(--orange); border-color: rgba(240,160,64,.25); }
+    .card-badge.purple { background: #1a0a2e; color: #b088ff;       border-color: rgba(176,136,255,.25); }
+    .card-title { font-weight: 700; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 26px; height: 26px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; transition: border-color .15s, color .15s; }
+    .icon-btn:hover { border-color: var(--red); color: var(--red); }
+    .icon-btn.expand { font-size: 10px; }
+    .icon-btn.expand:hover { border-color: var(--blue); color: var(--blue); }
+
+    .subnet-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .subnet-item { background: var(--s3); border: 1px solid var(--border); border-radius: 5px; padding: 8px 10px; margin-bottom: 6px; }
+    .subnet-item-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .subnet-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; background: var(--s2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; color: var(--muted); }
+    .device-badge { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--orange); background: #2a1a00; border: 1px solid rgba(240,160,64,.25); border-radius: 3px; padding: 1px 6px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+
+    .device-row { display: grid; grid-template-columns: 1fr 56px 26px; gap: 5px; margin-bottom: 4px; align-items: center; }
+    .device-row select, .device-row input { font-size: 11px; padding: 5px 7px; }
+    .device-row .icon-btn { width: 26px; height: 26px; font-size: 11px; }
+
+    .wan-item { background: var(--s2); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+    .wan-arrow { color: var(--orange); font-size: 18px; text-align: center; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r); font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: opacity .15s, transform .1s; white-space: nowrap; }
+    .btn:active { transform: scale(.97); }
+    .btn-green  { background: var(--green);  color: #000; } .btn-green:hover  { opacity:.85; }
+    .btn-ghost  { background: var(--s2);     color: var(--text); border: 1px solid var(--border); } .btn-ghost:hover { border-color: var(--muted); }
+    .btn-blue   { background: var(--blue);   color: #000; } .btn-blue:hover   { opacity:.85; }
+    .btn-orange { background: var(--orange); color: #000; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    .toggle-group { display: flex; background: var(--s3); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .toggle-opt { flex: 1; padding: 7px 10px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--muted); transition: all .15s; white-space: nowrap; }
+    .toggle-opt.active { background: var(--green); color: #000; }
+    .toggle-opt.active-blue { background: var(--blue); color: #000; }
+
+    .gen-bar { padding: 14px 20px; background: var(--s1); border-top: 1px solid var(--border); flex-shrink: 0; }
+    #validErr { display: none; padding: 10px 20px; background: #1a0505; border-top: 1px solid var(--red); color: var(--red); font-size: 11px; font-family: 'JetBrains Mono', monospace; line-height: 1.8; }
+
+    .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--s1); overflow-x: auto; flex-shrink: 0; }
+    .tab { padding: 10px 16px; font-size: 12px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); white-space: nowrap; transition: color .15s; }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+    .tab:hover:not(.active) { color: var(--text); }
+    pre { flex: 1; overflow: auto; padding: 18px 22px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--text); white-space: pre; background: transparent; }
+    .out-bar { padding: 10px 20px; border-top: 1px solid var(--border); background: var(--s1); display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    .status { font-size: 11px; color: var(--muted); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+
+    .toolbar { display: flex; gap: 6px; align-items: center; padding: 10px 20px; background: var(--s1); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+    .toolbar select { flex: 1; min-width: 160px; }
+    .toolbar .lbl { display: inline; margin: 0; text-transform: none; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    #locationList { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0; }
+    #locationList .card { margin-bottom: 0; }
+    .empty { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+    .empty span { display: block; font-size: 24px; margin-bottom: 8px; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .sub-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 6px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+    .tip-icon { cursor: help; color: var(--blue); font-size: 11px; margin-left: 4px; opacity: 0.6; font-family: 'DM Sans', sans-serif; font-weight: 700; text-transform: none; letter-spacing: 0; user-select: none; vertical-align: middle; }
+    .tip-wrap:hover .tip-icon { opacity: 1; }
+
+    #g-tip { display: none; position: fixed; z-index: 9999; background: var(--s3); border: 1px solid var(--blue); border-radius: var(--r); padding: 10px 13px; width: 270px; font-size: 11px; line-height: 1.65; color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 400; pointer-events: none; box-shadow: 0 8px 28px rgba(0,0,0,0.65); white-space: normal; }
+    #g-tip b { color: var(--blue); }
+    #g-tip-arrow { position: absolute; width: 0; height: 0; border: 5px solid transparent; }
+    #g-tip-arrow.down { border-top-color: var(--blue); top: 100%; }
+    #g-tip-arrow.up   { border-bottom-color: var(--blue); bottom: 100%; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Cisco Config Generator</h1>
-      <p>Generate IOS/IOS-XE configuration snippets using the form below.</p>
-    </header>
 
-    <div class="form-grid">
+<header>
+  <div class="logo">CISCO<span>CONFIG</span></div>
+  <div class="tagline">Packet Tracer generator · v7 · Router/Switch models · Multiple device types · Complete</div>
+  <div class="header-pills">
+    <div class="pill active" id="pillLoc">0 locations</div>
+    <div class="pill" id="pillSubnet">0 subnets</div>
+    <div class="pill" id="pillWan">0 WAN links</div>
+  </div>
+</header>
 
-      <!-- Device Settings -->
-      <section class="card">
-        <h2>Device Settings</h2>
+<div class="app">
+  <div class="left">
 
-        <label for="deviceType">Device Type</label>
-        <select id="deviceType">
-          <option value="">-- Select --</option>
-          <option value="router">Router</option>
-          <option value="switch">Switch (Layer 2)</option>
-          <option value="switch_l3">Switch (Layer 3)</option>
-          <option value="firewall">ASA Firewall</option>
-        </select>
-
-        <label for="hostname">Hostname</label>
-        <input type="text" id="hostname" placeholder="e.g. CORE-SW-01" />
-
-        <label for="domain">Domain Name</label>
-        <input type="text" id="domain" placeholder="e.g. company.local" />
-
-        <label for="enableSecret">Enable Secret</label>
-        <input type="password" id="enableSecret" placeholder="Enable secret password" />
-      </section>
-
-      <!-- Interface Settings -->
-      <section class="card">
-        <h2>Interface Settings</h2>
-
-        <label for="intType">Interface Type</label>
-        <select id="intType">
-          <option value="">-- Select --</option>
-          <option value="GigabitEthernet">GigabitEthernet</option>
-          <option value="FastEthernet">FastEthernet</option>
-          <option value="TenGigabitEthernet">TenGigabitEthernet</option>
-          <option value="Loopback">Loopback</option>
-          <option value="Vlan">Vlan</option>
-          <option value="Tunnel">Tunnel</option>
-        </select>
-
-        <label for="intNumber">Interface Number</label>
-        <input type="text" id="intNumber" placeholder="e.g. 0/0 or 1" />
-
-        <label for="intDesc">Description</label>
-        <input type="text" id="intDesc" placeholder="e.g. Uplink to Core" />
-
-        <label for="ipAddress">IP Address</label>
-        <input type="text" id="ipAddress" placeholder="e.g. 192.168.1.1" />
-
-        <label for="subnetMask">Subnet Mask</label>
-        <select id="subnetMask">
-          <option value="">-- Select --</option>
-          <option value="255.255.255.0">/24 — 255.255.255.0</option>
-          <option value="255.255.255.128">/25 — 255.255.255.128</option>
-          <option value="255.255.255.192">/26 — 255.255.255.192</option>
-          <option value="255.255.255.224">/27 — 255.255.255.224</option>
-          <option value="255.255.255.240">/28 — 255.255.255.240</option>
-          <option value="255.255.254.0">/23 — 255.255.254.0</option>
-          <option value="255.255.252.0">/22 — 255.255.252.0</option>
-          <option value="255.255.0.0">/16 — 255.255.0.0</option>
-          <option value="255.0.0.0">/8 — 255.0.0.0</option>
-        </select>
-
-        <label for="intMode">Port Mode</label>
-        <select id="intMode">
-          <option value="">-- Select --</option>
-          <option value="access">Access</option>
-          <option value="trunk">Trunk</option>
-          <option value="routed">Routed (no switchport)</option>
-        </select>
-
-        <label for="vlanId">VLAN ID (access/trunk)</label>
-        <input type="number" id="vlanId" placeholder="e.g. 10" min="1" max="4094" />
-      </section>
-
-      <!-- Routing -->
-      <section class="card">
-        <h2>Routing Protocol</h2>
-
-        <label for="routingProtocol">Protocol</label>
-        <select id="routingProtocol">
-          <option value="">-- None --</option>
-          <option value="static">Static Route</option>
-          <option value="ospf">OSPF</option>
-          <option value="eigrp">EIGRP</option>
-          <option value="bgp">BGP</option>
-          <option value="rip">RIP</option>
-        </select>
-
-        <div id="staticFields" class="proto-fields hidden">
-          <label for="staticDest">Destination Network</label>
-          <input type="text" id="staticDest" placeholder="e.g. 0.0.0.0" />
-          <label for="staticMask">Destination Mask</label>
-          <input type="text" id="staticMask" placeholder="e.g. 0.0.0.0" />
-          <label for="staticNext">Next-Hop / Exit Interface</label>
-          <input type="text" id="staticNext" placeholder="e.g. 10.0.0.1" />
-        </div>
-
-        <div id="ospfFields" class="proto-fields hidden">
-          <label for="ospfPid">Process ID</label>
-          <input type="number" id="ospfPid" placeholder="e.g. 1" />
-          <label for="ospfRouterId">Router ID</label>
-          <input type="text" id="ospfRouterId" placeholder="e.g. 1.1.1.1" />
-          <label for="ospfNetwork">Network (with wildcard)</label>
-          <input type="text" id="ospfNetwork" placeholder="e.g. 192.168.1.0 0.0.0.255" />
-          <label for="ospfArea">Area</label>
-          <input type="number" id="ospfArea" placeholder="e.g. 0" />
-        </div>
-
-        <div id="eigrpFields" class="proto-fields hidden">
-          <label for="eigrpAs">AS Number</label>
-          <input type="number" id="eigrpAs" placeholder="e.g. 100" />
-          <label for="eigrpNetwork">Network</label>
-          <input type="text" id="eigrpNetwork" placeholder="e.g. 192.168.1.0" />
-        </div>
-
-        <div id="bgpFields" class="proto-fields hidden">
-          <label for="bgpAs">Local AS Number</label>
-          <input type="number" id="bgpAs" placeholder="e.g. 65001" />
-          <label for="bgpNeighbor">Neighbor IP</label>
-          <input type="text" id="bgpNeighbor" placeholder="e.g. 10.0.0.2" />
-          <label for="bgpNeighborAs">Neighbor AS</label>
-          <input type="number" id="bgpNeighborAs" placeholder="e.g. 65002" />
-        </div>
-      </section>
-
-      <!-- Security -->
-      <section class="card">
-        <h2>Security &amp; Management</h2>
-
-        <label for="sshVersion">SSH Version</label>
-        <select id="sshVersion">
-          <option value="">-- None --</option>
-          <option value="2">SSHv2</option>
-          <option value="1">SSHv1</option>
-        </select>
-
-        <label for="syslogServer">Syslog Server IP</label>
-        <input type="text" id="syslogServer" placeholder="e.g. 10.0.0.10" />
-
-        <label for="ntpServer">NTP Server IP</label>
-        <input type="text" id="ntpServer" placeholder="e.g. 10.0.0.20" />
-
-        <label for="snmpCommunity">SNMP Community (read-only)</label>
-        <input type="text" id="snmpCommunity" placeholder="e.g. public" />
-
-        <label for="bannerMotd">Banner MOTD</label>
-        <textarea id="bannerMotd" rows="3" placeholder="e.g. Authorized access only."></textarea>
-      </section>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <label class="lbl">Preset:</label>
+      <select id="presetSel"></select>
+      <button class="btn btn-ghost btn-sm" id="loadPresetBtn">Load</button>
+      <button class="btn btn-blue  btn-sm" id="savePresetBtn">Save</button>
+      <button class="btn btn-ghost btn-sm" id="exportBtn"   title="Export project as JSON">↓ Export</button>
+      <label  class="btn btn-ghost btn-sm" title="Import project from JSON" style="cursor:pointer;margin:0;">
+        ↑ Import<input type="file" accept=".json" id="importFile" style="display:none;" />
+      </label>
     </div>
 
-    <div class="actions">
-      <button id="generateBtn">Generate Config</button>
-      <button id="clearBtn" class="secondary">Clear</button>
-    </div>
-
-    <!-- Output -->
-    <section class="card output-card" id="outputSection" style="display:none;">
-      <div class="output-header">
-        <h2>Generated Configuration</h2>
-        <button id="copyBtn">Copy to Clipboard</button>
+    <!-- Global Settings -->
+    <div class="section">
+      <div class="section-head"><div class="section-title">Global Settings</div></div>
+      <div class="row2">
+        <div class="field">
+          <label>WAN Subnet Mask <span class="tip-wrap" data-what="Subnet mask for serial WAN links between routers." data-why="/30 gives only 2 usable addresses — perfect for point-to-point links. Never use /27 or larger on WAN."><span class="tip-icon">ⓘ</span></span></label>
+          <select id="wanMask">
+            <option value="255.255.255.252">★ /30 – 255.255.255.252 (recommended)</option>
+            <option value="255.255.255.248">   /29 – 255.255.255.248</option>
+            <option value="255.255.255.240">   /28 – 255.255.255.240</option>
+          </select>
+          <div class="hint" id="wanMaskHint">/30 – 2 usable addresses, point-to-point</div>
+        </div>
+        <div class="field">
+          <label>LAN Subnet Mask <span class="tip-wrap" data-what="Subnet mask for all local networks (LAN)." data-why="/24 gives 254 usable addresses and is easy to understand — industry standard for internal office networks."><span class="tip-icon">ⓘ</span></span></label>
+          <select id="lanMask">
+            <option value="255.255.255.0">  ★ /24 – 255.255.255.0   (recommended)</option>
+            <option value="255.255.255.128">   /25 – 255.255.255.128</option>
+            <option value="255.255.255.192">   /26 – 255.255.255.192</option>
+            <option value="255.255.255.224">   /27 – 255.255.255.224</option>
+            <option value="255.255.254.0">     /23 – 255.255.254.0</option>
+            <option value="255.255.252.0">     /22 – 255.255.252.0</option>
+          </select>
+          <div class="hint" id="lanMaskHint">/24 – 254 usable addresses</div>
+        </div>
       </div>
-      <pre id="configOutput"></pre>
-    </section>
+      <div class="field">
+        <label>Routing Protocol <span class="tip-wrap" data-what="Determines how routers learn about remote networks." data-why="Static Routes is simplest for labs. OSPF is more realistic and scales better — recommended for 3+ locations."><span class="tip-icon">ⓘ</span></span></label>
+        <div class="toggle-group">
+          <div class="toggle-opt active" id="protoStatic" onclick="setRoutingProtocol('static')">Static Routes <span class="tip-wrap" data-what="Manual static routes to each remote network." data-why="Easiest to understand. Perfect for labs with 2–3 locations."><span class="tip-icon">ⓘ</span></span></div>
+          <div class="toggle-opt" id="protoOspf"   onclick="setRoutingProtocol('ospf')">OSPF <span class="tip-wrap" data-what="Open Shortest Path First — dynamic routing that automatically shares routing tables." data-why="Scales better. Used in most enterprise networks. Choose for realistic setups."><span class="tip-icon">ⓘ</span></span></div>
+        </div>
+        <div class="hint" id="protoHint">Routes to remote networks generated automatically</div>
+      </div>
+    </div>
+
+    <!-- Locations -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Locations</div>
+        <div class="count" id="locCount">0</div>
+      </div>
+      <div id="locationList"></div>
+      <button class="btn btn-ghost btn-sm" id="addLocBtn">+ Add Location</button>
+    </div>
+
+    <!-- WAN Links -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">WAN Links</div>
+        <div class="count" id="wanCount">0</div>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Topology Mode <span class="tip-wrap" data-what="Determines how WAN links are configured." data-why="Auto is fastest for linear networks. Manual gives full control."><span class="tip-icon">ⓘ</span></span></label>
+        <div class="toggle-group">
+          <div class="toggle-opt active" id="modeAuto"   onclick="setWanMode('auto')">⚡ Auto (chain) <span class="tip-wrap" data-what="Connects routers in a chain: A→B→C→D." data-why="WAN IPs are set automatically. Use for linear topologies."><span class="tip-icon">ⓘ</span></span></div>
+          <div class="toggle-opt"        id="modeManual" onclick="setWanMode('manual')">✎ Manual <span class="tip-wrap" data-what="You define which routers are connected." data-why="Use for star, hub-and-spoke, or mesh topology."><span class="tip-icon">ⓘ</span></span></div>
+        </div>
+        <div class="hint" id="modeHint">Routers connected A→B→C→D automatically</div>
+      </div>
+      <div id="wanList"></div>
+      <div id="wanManualAdd" style="display:none;">
+        <button class="btn btn-ghost btn-sm" id="addWanBtn">+ Add WAN Link</button>
+      </div>
+    </div>
+
+    <div id="validErr"></div>
+    <div class="gen-bar">
+      <button class="btn btn-green" style="width:100%;" id="generateBtn">⚡ Generate Configuration</button>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- RESIZER -->
+  <div class="resizer" id="resizer"></div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="tabs" id="tabBar"><div class="tab active" data-key="all">All Devices</div></div>
+    <pre id="output">// Add locations and subnets, then click Generate</pre>
+    <div class="out-bar">
+      <button class="btn btn-green btn-sm" id="copyBtn">Copy</button>
+      <button class="btn btn-ghost btn-sm" id="downloadBtn">Download .txt</button>
+      <span class="status" id="statusMsg"></span>
+    </div>
+  </div>
+</div>
+
+<datalist id="serialIfList">
+  <option value="Serial0/1/0">ISR 4000 (standard)</option>
+  <option value="Serial0/0/0">ISR 2900/3900</option>
+  <option value="Serial0/0">2600 series</option>
+</datalist>
+
+<div id="g-tip"><div id="g-tip-inner"></div><div id="g-tip-arrow" class="down"></div></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════
+const ROUTER_MODELS = {
+  ISR4331: { label: 'Cisco ISR 4331 ★', lanIf: 'GigabitEthernet0/0/0', serialIf: 'Serial0/1/0'  },
+  ISR2901: { label: 'Cisco ISR 2901',   lanIf: 'GigabitEthernet0/0',   serialIf: 'Serial0/0/0'  },
+  ISR1941: { label: 'Cisco ISR 1941',   lanIf: 'GigabitEthernet0/0',   serialIf: 'Serial0/0/0'  },
+  C2811:   { label: 'Cisco 2811',       lanIf: 'FastEthernet0/0',      serialIf: 'Serial0/0/0'  },
+};
+
+const SWITCH_MODELS = {
+  C2960: { label: 'Catalyst 2960 (L2) ★', type: 'l2' },
+  C3560: { label: 'Catalyst 3560 (L3)',    type: 'l3' },
+  C3650: { label: 'Catalyst 3650 (L3)',    type: 'l3' },
+};
+
+const DEVICE_TYPES = ['PC', 'Laptop', 'Server', 'Printer', 'IP Phone'];
+const DEVICE_ICONS = { PC: '🖥', Laptop: '💻', Server: '🖧', Printer: '🖨', 'IP Phone': '📞' };
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let locations       = [];
+let wanLinks        = [];
+let wanMode         = 'auto';
+let routingProtocol = 'static';
+let sections        = {};
+let activeTab       = 'all';
+let locIdSeq = 0, subIdSeq = 0, wanIdSeq = 0;
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+const uid    = () => ++locIdSeq;
+const subUid = () => ++subIdSeq;
+const wanUid = () => ++wanIdSeq;
+
+function networkAddr(ip, mask) {
+  if (!ip || !mask) return '0.0.0.0';
+  return ip.split('.').map((x,i) => Number(x) & Number(mask.split('.')[i])).join('.');
+}
+function wildcardMask(mask) { return mask.split('.').map(n => 255 - parseInt(n)).join('.'); }
+function cidrLen(mask) {
+  const m = {'255.255.255.252':'/30','255.255.255.248':'/29','255.255.255.240':'/28',
+    '255.255.255.0':'/24','255.255.255.128':'/25','255.255.255.192':'/26',
+    '255.255.255.224':'/27','255.255.254.0':'/23','255.255.252.0':'/22'};
+  return m[mask]||'';
+}
+function maskHosts(mask) {
+  const h = {'255.255.255.252':2,'255.255.255.248':6,'255.255.255.240':14,
+    '255.255.255.0':254,'255.255.255.128':126,'255.255.255.192':62,
+    '255.255.255.224':30,'255.255.254.0':510,'255.255.252.0':1022};
+  return h[mask]||'?';
+}
+function isValidIp(ip) {
+  if (!ip) return false;
+  const p = ip.split('.');
+  if (p.length !== 4) return false;
+  return p.every(x => { const n=parseInt(x); return !isNaN(n)&&n>=0&&n<=255&&String(n)===x; });
+}
+function v(id) { return (document.getElementById(id)||{value:''}).value.trim(); }
+function getLoc(id) { return locations.find(l => l.id === id); }
+
+// Transit subnet for L3 switch: 172.16.{idx+1}.0/30
+function transitIps(locIdx) {
+  return { router: `172.16.${locIdx+1}.1`, sw: `172.16.${locIdx+1}.2`, mask: '255.255.255.252', net: `172.16.${locIdx+1}.0` };
+}
+
+// Total device count for a subnet
+function totalDevices(s) {
+  return (s.devices||[]).reduce((a,d) => a + (d.count||1), 0);
+}
+
+// Summary badge text: "2× PC + 1× Laptop"
+function deviceSummary(s) {
+  const parts = (s.devices||[]).filter(d=>d.count>0).map(d => `${d.count}× ${DEVICE_ICONS[d.type]||''}${d.type}`);
+  return parts.join(' + ') || '—';
+}
+
+// Generate flat IP+label list for all device groups in a subnet
+function allDeviceIps(gwIp, devices) {
+  const base = gwIp.replace(/\.\d+$/, '');
+  const entries = [];
+  let offset = 10;
+  (devices||[]).forEach(d => {
+    for (let i = 0; i < (d.count||1); i++) {
+      const label = (d.count||1) === 1 ? d.type : `${d.type}-${i+1}`;
+      entries.push({ label, ip: `${base}.${offset}`, type: d.type });
+      offset++;
+    }
+  });
+  return entries;
+}
+
+// ═══════════════════════════════════════════════
+//  TOOLTIP
+// ═══════════════════════════════════════════════
+function tip(what, why) {
+  const w = what.replace(/"/g,'&quot;'), y = why.replace(/"/g,'&quot;');
+  return `<span class="tip-wrap" data-what="${w}" data-why="${y}"><span class="tip-icon">ⓘ</span></span>`;
+}
+(function() {
+  const gTip=document.getElementById('g-tip'), gI=document.getElementById('g-tip-inner'), gA=document.getElementById('g-tip-arrow');
+  const W=270, M=8;
+  document.addEventListener('mouseover', e => {
+    const icon = e.target.closest('.tip-icon'); if (!icon) return;
+    const wrap = icon.closest('.tip-wrap'); if (!wrap||!wrap.dataset.what) return;
+    gI.innerHTML = `<b>What:</b> ${wrap.dataset.what}<br><br><b>Why:</b> ${wrap.dataset.why}`;
+    gTip.style.display = 'block';
+    const r = icon.getBoundingClientRect(), h = gTip.offsetHeight;
+    const below = r.top < h + M + 10;
+    const top   = below ? r.bottom + M : r.top - h - M;
+    let left = r.left + r.width/2 - W/2;
+    left = Math.max(M, Math.min(left, window.innerWidth - W - M));
+    gTip.style.top = top+'px'; gTip.style.left = left+'px';
+    const aLeft = (r.left + r.width/2) - left - 5;
+    gA.style.left = Math.max(8, Math.min(aLeft, W-18))+'px';
+    if (below) { gA.className='up'; gA.style.bottom='100%'; gA.style.top=''; }
+    else        { gA.className='down'; gA.style.top='100%'; gA.style.bottom=''; }
+  });
+  document.addEventListener('mouseout', e => {
+    const icon = e.target.closest('.tip-icon'); if (!icon) return;
+    const wrap = icon.closest('.tip-wrap');
+    if (wrap && !wrap.contains(e.relatedTarget)) gTip.style.display = 'none';
+  });
+})();
+
+// ═══════════════════════════════════════════════
+//  RENDER LOCATIONS
+// ═══════════════════════════════════════════════
+function renderLocations() {
+  const el = document.getElementById('locationList');
+  if (!locations.length) { el.innerHTML='<div class="empty"><span>📍</span>No locations yet</div>'; updatePills(); return; }
+  el.innerHTML = '';
+  locations.forEach(loc => {
+    const swModel = Object.entries(SWITCH_MODELS).find(([,m]) => m.type === loc.switchType)?.[0] || 'C2960';
+    const div = document.createElement('div');
+    div.className = 'card'; div.id = 'loc-' + loc.id;
+    div.innerHTML = `
+      <div class="card-head">
+        <span class="card-badge">${loc.name||'LOC'}</span>
+        <span class="card-title">${loc.routerName||'Router'}</span>
+        <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${loc.switchType==='l3'?'L3':'L2'}</span>
+        <button class="icon-btn expand" onclick="toggleLocExpand(${loc.id})">▼</button>
+        <button class="icon-btn" onclick="removeLoc(${loc.id})">✕</button>
+      </div>
+      <div class="loc-body" id="locbody-${loc.id}">
+
+        <div class="sub-label">Identification</div>
+        <div class="row2">
+          <div class="field">
+            <label>Location Code ${tip('Short code for the location.','Used in hostname and config. Short codes are easier to read.')}</label>
+            <input value="${loc.name}" placeholder="KVG" oninput="updateLoc(${loc.id},'name',this.value)" />
+          </div>
+          <div class="field">
+            <label>Router Hostname ${tip('The hostname the router gets in the configuration.','Clear hostnames make it easy to identify devices in show commands.')}</label>
+            <input value="${loc.routerName}" placeholder="Router-KVG" oninput="updateLoc(${loc.id},'routerName',this.value)" />
+          </div>
+        </div>
+
+        <div class="sub-label">Hardware</div>
+        <div class="row2">
+          <div class="field">
+            <label>Router Model ${tip('The Cisco router model used at this location.','Select model to auto-fill correct interface names. Different models have different ports.')}</label>
+            <select onchange="applyRouterModel(${loc.id},this.value)">
+              ${Object.entries(ROUTER_MODELS).map(([k,m])=>`<option value="${k}"${loc.routerModel===k?' selected':''}>${m.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Switch Model ${tip('Catalyst 2960 is an L2 switch (trunk/access). Catalyst 3560/3650 is L3 and handles inter-VLAN routing itself.','L3 switch eliminates the need for router-on-a-stick. More realistic for enterprise networks, but more complex configuration.')}</label>
+            <select onchange="applySwitch(${loc.id},this.value)">
+              ${Object.entries(SWITCH_MODELS).map(([k,m])=>`<option value="${k}"${swModel===k?' selected':''}>${m.label}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div class="sub-label">Interfaces</div>
+        <div class="row2">
+          <div class="field">
+            <label>LAN Interface ${tip('Physical port on the router facing LAN.','Auto-filled by router model. Change only if needed.')}</label>
+            <input value="${loc.lanIf}" placeholder="GigabitEthernet0/0/0" oninput="updateLoc(${loc.id},'lanIf',this.value)" />
+          </div>
+          <div class="field">
+            <label>Serial Interface ${tip('Serial port for WAN. Used only in L2 switch mode (not L3).','Auto-filled by router model.')}</label>
+            <input value="${loc.serialIf||'Serial0/1/0'}" list="serialIfList" oninput="updateLoc(${loc.id},'serialIf',this.value)" />
+          </div>
+        </div>
+
+        <div class="subnet-list">
+          <div class="sub-label">Subnets</div>
+          <div id="subnets-${loc.id}"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addSubnet(${loc.id})">+ Add Subnet</button>
+        </div>
+      </div>`;
+    el.appendChild(div);
+    renderSubnets(loc.id);
+  });
+  if (wanMode==='auto') buildAutoWan();
+  renderWanLinks();
+  updatePills();
+}
+
+function toggleLocExpand(id) {
+  const body=document.getElementById('locbody-'+id), btn=body.previousElementSibling.querySelector('.expand');
+  const h=body.style.display==='none'; body.style.display=h?'':'none'; btn.textContent=h?'▲':'▼';
+}
+
+function renderSubnets(locId) {
+  const loc=getLoc(locId), el=document.getElementById('subnets-'+locId);
+  if (!el) return;
+  if (!loc.subnets.length) { el.innerHTML=''; return; }
+  el.innerHTML='';
+  loc.subnets.forEach(s => {
+    const summary = deviceSummary(s);
+    const devRows = (s.devices||[]).map((dv,idx) => `
+      <div class="device-row">
+        <select onchange="updateDevice(${locId},${s.id},${idx},'type',this.value)">
+          ${DEVICE_TYPES.map(t=>`<option value="${t}"${dv.type===t?' selected':''}>${DEVICE_ICONS[t]||''} ${t}</option>`).join('')}
+        </select>
+        <input type="number" min="1" max="50" value="${dv.count||1}" style="text-align:center;" oninput="updateDevice(${locId},${s.id},${idx},'count',Math.max(1,parseInt(this.value)||1))" />
+        <button class="icon-btn" onclick="removeDevice(${locId},${s.id},${idx})" title="Remove device">✕</button>
+      </div>`).join('');
+
+    const d = document.createElement('div');
+    d.className = 'subnet-item';
+    d.innerHTML = `
+      <div class="subnet-item-head">
+        <span class="subnet-tag">${s.name||'subnet'}</span>
+        <span style="flex:1;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;">${s.gwIp||'—'}</span>
+        <span class="device-badge" title="${summary}">${summary}</span>
+        <button class="icon-btn" style="width:22px;height:22px;font-size:11px;" onclick="removeSubnet(${locId},${s.id})">✕</button>
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label>Subnet Name ${tip('Descriptive name for the subnet.','Used as VLAN name and DHCP pool name.')}</label>
+          <input value="${s.name}" placeholder="Management" oninput="updateSubnet(${locId},${s.id},'name',this.value)" />
+        </div>
+        <div class="field">
+          <label>Switch ${tip('Hostname of the switch for this subnet.','The switch gets automatically generated configuration.')}</label>
+          <input value="${s.switchName}" placeholder="SW-KVG-1" oninput="updateSubnet(${locId},${s.id},'switchName',this.value)" />
+        </div>
+        <div class="field">
+          <label>Gateway IP ${tip('The IP address that is the gateway for the subnet.','.1 as the last octet is convention. PCs use this as the default gateway.')}</label>
+          <input value="${s.gwIp}" placeholder="192.168.1.1" oninput="updateSubnet(${locId},${s.id},'gwIp',this.value)" />
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="sub-label">Devices ${tip('Add one or more device types to this subnet.','E.g. 2× PC + 1× Laptop. Generates full IP list in PC Setup. IP addresses assigned from .10 upward.')}</div>
+      <div id="devrows-${locId}-${s.id}">${devRows}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:4px;width:100%;" onclick="addDevice(${locId},${s.id})">+ Add Device</button>`;
+    el.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  LOCATION CRUD
+// ═══════════════════════════════════════════════
+function addLocation(data={}) {
+  const id=uid();
+  const model = ROUTER_MODELS[data.routerModel] || ROUTER_MODELS.ISR4331;
+  locations.push({
+    id,
+    name:        data.name        || '',
+    routerName:  data.routerName  || '',
+    routerModel: data.routerModel || 'ISR4331',
+    switchType:  data.switchType  || 'l2',
+    lanIf:       data.lanIf       || model.lanIf,
+    serialIf:    data.serialIf    || model.serialIf,
+    lanIp:       data.lanIp       || '',
+    subnets:     (data.subnets||[]).map(s=>({
+      id: subUid(),
+      name:       s.name       || '',
+      switchName: s.switchName || '',
+      gwIp:       s.gwIp       || '',
+      // support both new (devices[]) and legacy (deviceType/deviceCount) format
+      devices: s.devices
+        ? s.devices.map(d=>({type:d.type||'PC', count:d.count||1}))
+        : [{type: s.deviceType||'PC', count: s.deviceCount||1}]
+    }))
+  });
+  renderLocations();
+}
+function removeLoc(id) {
+  locations=locations.filter(l=>l.id!==id);
+  wanLinks=wanLinks.filter(w=>w.fromId!==id&&w.toId!==id);
+  renderLocations();
+}
+function updateLoc(id,key,val) {
+  const loc=getLoc(id); if(loc){loc[key]=val;updatePills();if(wanMode==='auto')buildAutoWan();}
+}
+function applyRouterModel(locId, modelKey) {
+  const loc=getLoc(locId); if(!loc) return;
+  const model=ROUTER_MODELS[modelKey]; if(!model) return;
+  loc.routerModel=modelKey; loc.lanIf=model.lanIf; loc.serialIf=model.serialIf;
+  renderLocations();
+}
+function applySwitch(locId, swKey) {
+  const loc=getLoc(locId); if(!loc) return;
+  const sw=SWITCH_MODELS[swKey]; if(!sw) return;
+  loc.switchType=sw.type; loc.switchModel=swKey;
+  renderLocations();
+}
+function addSubnet(locId) {
+  const loc=getLoc(locId); if(!loc) return;
+  loc.subnets.push({id:subUid(), name:'', switchName:'', gwIp:'', devices:[{type:'PC',count:1}]});
+  renderSubnets(locId); updatePills();
+}
+function removeSubnet(locId,subId) {
+  const loc=getLoc(locId); if(!loc) return;
+  loc.subnets=loc.subnets.filter(s=>s.id!==subId);
+  renderSubnets(locId); updatePills();
+}
+function updateSubnet(locId,subId,key,val) {
+  const loc=getLoc(locId); if(!loc) return;
+  const s=loc.subnets.find(x=>x.id===subId);
+  if(s){s[key]=val;renderSubnets(locId);updatePills();}
+}
+
+// Device rows within a subnet
+function addDevice(locId, subId) {
+  const loc=getLoc(locId); if(!loc) return;
+  const s=loc.subnets.find(x=>x.id===subId); if(!s) return;
+  s.devices.push({type:'PC', count:1});
+  renderSubnets(locId); updatePills();
+}
+function removeDevice(locId, subId, devIdx) {
+  const loc=getLoc(locId); if(!loc) return;
+  const s=loc.subnets.find(x=>x.id===subId); if(!s) return;
+  if(s.devices.length<=1){alert('A subnet must have at least one device type.');return;}
+  s.devices.splice(devIdx,1);
+  renderSubnets(locId); updatePills();
+}
+function updateDevice(locId, subId, devIdx, key, val) {
+  const loc=getLoc(locId); if(!loc) return;
+  const s=loc.subnets.find(x=>x.id===subId); if(!s) return;
+  if(s.devices[devIdx]) s.devices[devIdx][key] = key==='count' ? parseInt(val)||1 : val;
+  renderSubnets(locId); updatePills();
+}
+
+// ═══════════════════════════════════════════════
+//  WAN LINKS
+// ═══════════════════════════════════════════════
+function setWanMode(mode) {
+  wanMode=mode;
+  document.getElementById('modeAuto').classList.toggle('active',mode==='auto');
+  document.getElementById('modeManual').classList.toggle('active',mode==='manual');
+  document.getElementById('wanManualAdd').style.display=mode==='manual'?'':'none';
+  document.getElementById('modeHint').textContent=mode==='auto'?'Routers connected A→B→C→D automatically':'Define each WAN link manually';
+  if(mode==='auto') buildAutoWan();
+  renderWanLinks();
+}
+function buildAutoWan() {
+  wanLinks=[];
+  for(let i=0;i<locations.length-1;i++){
+    const a=locations[i],b=locations[i+1];
+    wanLinks.push({id:wanUid(),fromId:a.id,toId:b.id,ipFrom:`10.0.${i+1}.1`,ipTo:`10.0.${i+1}.2`});
+  }
+  updatePills();
+}
+function addManualWan() {
+  if(locations.length<2){alert('Add at least 2 locations first.');return;}
+  wanLinks.push({id:wanUid(),fromId:locations[0].id,toId:locations[1].id,ipFrom:`10.0.${wanLinks.length+1}.1`,ipTo:`10.0.${wanLinks.length+1}.2`});
+  renderWanLinks(); updatePills();
+}
+function removeWan(id){wanLinks=wanLinks.filter(w=>w.id!==id);renderWanLinks();updatePills();}
+function updateWan(id,key,val){const w=wanLinks.find(x=>x.id===id);if(w)w[key]=(key==='fromId'||key==='toId')?parseInt(val):val;}
+function renderWanLinks() {
+  const el=document.getElementById('wanList'); el.innerHTML='';
+  if(!wanLinks.length){el.innerHTML='<div class="empty" style="padding:10px 0;font-size:12px;">No WAN links</div>';return;}
+  const mask=v('wanMask');
+  wanLinks.forEach(w=>{
+    const fL=getLoc(w.fromId),tL=getLoc(w.toId);
+    const div=document.createElement('div');
+    if(wanMode==='auto'){
+      div.className='wan-item';
+      div.innerHTML=`
+        <div style="font-size:12px;font-weight:700;color:var(--green);">${fL?fL.routerName||fL.name:'?'}<br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">${w.ipFrom}/${mask}</span></div>
+        <div class="wan-arrow">⟷</div>
+        <div style="font-size:12px;font-weight:700;color:var(--green);text-align:right;">${tL?tL.routerName||tL.name:'?'}<br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">${w.ipTo}/${mask}</span></div>`;
+    } else {
+      div.className='card';
+      div.innerHTML=`
+        <div class="card-head">
+          <span class="card-badge orange">WAN</span>
+          <span class="card-title">${fL?fL.name:'?'} ⟷ ${tL?tL.name:'?'}</span>
+          <button class="icon-btn" onclick="removeWan(${w.id})">✕</button>
+        </div>
+        <div class="row2">
+          <div class="field"><label>From ${tip('DCE side — sets clock rate.','The From-router takes the DCE role automatically.')}</label>
+            <select onchange="updateWan(${w.id},'fromId',this.value)">${locations.map(l=>`<option value="${l.id}"${l.id===w.fromId?' selected':''}>${l.routerName||l.name}</option>`).join('')}</select></div>
+          <div class="field"><label>To ${tip('DTE side — receives the clock.','Does not need clock rate.')}</label>
+            <select onchange="updateWan(${w.id},'toId',this.value)">${locations.map(l=>`<option value="${l.id}"${l.id===w.toId?' selected':''}>${l.routerName||l.name}</option>`).join('')}</select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>IP From ${tip('IP on the DCE router\'s serial port.','/30 convention: .1 on the From side.')}</label>
+            <input value="${w.ipFrom}" oninput="updateWan(${w.id},'ipFrom',this.value)" /></div>
+          <div class="field"><label>IP To ${tip('IP on the DTE router\'s serial port.','/30 convention: .2 on the To side.')}</label>
+            <input value="${w.ipTo}" oninput="updateWan(${w.id},'ipTo',this.value)" /></div>
+        </div>`;
+    }
+    el.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  ROUTING PROTOCOL
+// ═══════════════════════════════════════════════
+function setRoutingProtocol(p) {
+  routingProtocol=p;
+  document.getElementById('protoStatic').classList.toggle('active',p==='static');
+  document.getElementById('protoOspf').classList.toggle('active',p==='ospf');
+  document.getElementById('protoHint').textContent=p==='static'?'Routes to remote networks generated automatically':'OSPF area 0 — dynamic routing between all devices';
+}
+
+// ═══════════════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════════════
+function validate() {
+  const e=[];
+  if(!locations.length){e.push('No locations defined.');return e;}
+  locations.forEach(loc=>{
+    if(!loc.routerName) e.push(`"${loc.name||'?'}": missing Router Hostname`);
+    loc.subnets.forEach(s=>{
+      if(s.gwIp&&!isValidIp(s.gwIp)) e.push(`${loc.name}›${s.name||'subnet'}: invalid Gateway IP "${s.gwIp}"`);
+    });
+  });
+  wanLinks.forEach((w,i)=>{
+    if(w.fromId===w.toId) e.push(`WAN ${i+1}: From and To are the same router`);
+    if(w.ipFrom&&!isValidIp(w.ipFrom)) e.push(`WAN ${i+1}: invalid IP From "${w.ipFrom}"`);
+    if(w.ipTo&&!isValidIp(w.ipTo))     e.push(`WAN ${i+1}: invalid IP To "${w.ipTo}"`);
+  });
+  return e;
+}
+function showErrors(e){const el=document.getElementById('validErr');el.innerHTML='⚠ '+e.join('<br>⚠ ');el.style.display='block';}
+function hideErrors(){const el=document.getElementById('validErr');el.style.display='none';el.innerHTML='';}
+
+// ═══════════════════════════════════════════════
+//  CONFIG GENERATION
+// ═══════════════════════════════════════════════
+function generate() {
+  if(wanMode==='auto') buildAutoWan();
+  const errs=validate(); if(errs.length){showErrors(errs);return;} hideErrors();
+
+  const lanMask=v('lanMask'), wanMask=v('wanMask');
+  sections={all:''};
+  const tabBar=document.getElementById('tabBar');
+  tabBar.innerHTML='<div class="tab active" data-key="all">All Devices</div>';
+  tabBar.querySelector('[data-key=all]').addEventListener('click',()=>showTab('all'));
+
+  let allParts=[], allSwitchParts=[];
+
+  locations.forEach((loc, locIdx) => {
+    const myWans    = wanLinks.filter(w=>w.fromId===loc.id||w.toId===loc.id);
+    const isL3      = loc.switchType==='l3';
+    const subsWithIp= loc.subnets.filter(s=>s.gwIp);
+    const multiSub  = subsWithIp.length>1;
+    const serialIf  = loc.serialIf || ROUTER_MODELS[loc.routerModel]?.serialIf || 'Serial0/1/0';
+    const transit   = transitIps(locIdx);
+
+    // Remote subnet routes (for static routing)
+    const remoteSubnets=[];
+    locations.forEach(other=>{
+      if(other.id===loc.id) return;
+      other.subnets.forEach(s=>{
+        if(!s.gwIp) return;
+        const net=networkAddr(s.gwIp,lanMask);
+        const direct=wanLinks.find(w=>(w.fromId===loc.id&&w.toId===other.id)||(w.toId===loc.id&&w.fromId===other.id));
+        let nh='';
+        if(direct) nh=direct.fromId===loc.id?direct.ipTo:direct.ipFrom;
+        else if(myWans.length){const f=myWans[0];nh=f.fromId===loc.id?f.ipTo:f.ipFrom;}
+        if(net&&nh) remoteSubnets.push({net,mask:lanMask,via:nh});
+      });
+      if(other.lanIp){
+        const net=networkAddr(other.lanIp,lanMask);
+        const direct=wanLinks.find(w=>(w.fromId===loc.id&&w.toId===other.id)||(w.toId===loc.id&&w.fromId===other.id));
+        let nh='';
+        if(direct) nh=direct.fromId===loc.id?direct.ipTo:direct.ipFrom;
+        else if(myWans.length){const f=myWans[0];nh=f.fromId===loc.id?f.ipTo:f.ipFrom;}
+        if(net&&nh&&!remoteSubnets.find(r=>r.net===net)) remoteSubnets.push({net,mask:lanMask,via:nh});
+      }
+    });
+
+    // ════════════════════════════════
+    //  ROUTER
+    // ════════════════════════════════
+    let cfg=`! ${'═'.repeat(56)}\n! ROUTER : ${loc.routerName||loc.name}\n! Site   : ${loc.name}  |  Model: ${ROUTER_MODELS[loc.routerModel]?.label||loc.routerModel}\n! Switch : ${isL3?'L3 (Catalyst 3560/3650) – ip routing':'L2 (Catalyst 2960) – router-on-a-stick'}\n! ${'═'.repeat(56)}\n`;
+    cfg+=`enable\nconfigure terminal\n!\n`;
+    cfg+=`hostname ${loc.routerName||loc.name}\n!\n`;
+    cfg+=`no ip domain-lookup\n`;
+    cfg+=`banner motd #\n*** ${loc.routerName||loc.name} | ${loc.name} ***\n*** Unauthorized access is prohibited ***\n#\n!\n`;
+    cfg+=`enable secret cisco\n!\n`;
+
+    // WAN interfaces
+    myWans.forEach((w,idx)=>{
+      const isFrom=w.fromId===loc.id, myIp=isFrom?w.ipFrom:w.ipTo;
+      const remLoc=getLoc(isFrom?w.toId:w.fromId);
+      const ifName=idx===0?serialIf:serialIf.replace(/(\d+)$/,m=>String(parseInt(m)+idx));
+      cfg+=`! WAN → ${remLoc?remLoc.routerName||remLoc.name:'?'}\ninterface ${ifName}\n ip address ${myIp} ${wanMask}\n`;
+      if(isFrom) cfg+=` clock rate 64000\n`;
+      cfg+=` no shutdown\n!\n`;
+    });
+
+    // LAN side
+    if(!subsWithIp.length) {
+      if(loc.lanIf&&loc.lanIp) cfg+=`interface ${loc.lanIf}\n ip address ${loc.lanIp} ${lanMask}\n no shutdown\n!\n`;
+    } else if(isL3) {
+      cfg+=`! LAN – routed port to L3 switch (transit ${transit.net}/30)\ninterface ${loc.lanIf||'GigabitEthernet0/0/0'}\n ip address ${transit.router} ${transit.mask}\n no shutdown\n!\n`;
+    } else if(!multiSub) {
+      cfg+=`! LAN interface\ninterface ${loc.lanIf||'GigabitEthernet0/0/0'}\n ip address ${subsWithIp[0].gwIp} ${lanMask}\n no shutdown\n!\n`;
+    } else {
+      cfg+=`! LAN – Router-on-a-Stick (trunk → L2 dist switch)\ninterface ${loc.lanIf||'GigabitEthernet0/0/0'}\n no ip address\n no shutdown\n!\n`;
+      subsWithIp.forEach((s,i)=>{
+        const vlan=(i+1)*10;
+        cfg+=`interface ${loc.lanIf||'GigabitEthernet0/0/0'}.${vlan}\n encapsulation dot1Q ${vlan}\n ip address ${s.gwIp} ${lanMask}\n no shutdown\n!\n`;
+      });
+    }
+
+    // DHCP on router (L2 setup only)
+    if(!isL3&&subsWithIp.length){
+      cfg+=`! DHCP pools\n`;
+      subsWithIp.forEach(s=>{
+        const cnt=totalDevices(s);
+        const base=s.gwIp.replace(/\.\d+$/,'');
+        cfg+=`ip dhcp excluded-address ${s.gwIp}\n`;
+        if(cnt>0) cfg+=`ip dhcp excluded-address ${base}.10 ${base}.${9+cnt}\n`;
+      });
+      cfg+=`!\n`;
+      subsWithIp.forEach(s=>{
+        const net=networkAddr(s.gwIp,lanMask);
+        const pool=(s.name||'POOL').replace(/[^a-zA-Z0-9]/g,'_').toUpperCase().substring(0,20);
+        cfg+=`ip dhcp pool ${pool}\n network ${net} ${lanMask}\n default-router ${s.gwIp}\n dns-server 8.8.8.8\n!\n`;
+      });
+    }
+
+    // Routing
+    if(routingProtocol==='ospf'){
+      const rid=isL3?transit.router:(subsWithIp.length?subsWithIp[0].gwIp:myWans.length?(myWans[0].fromId===loc.id?myWans[0].ipFrom:myWans[0].ipTo):'1.1.1.1');
+      cfg+=`! OSPF area 0\nrouter ospf 1\n router-id ${rid}\n`;
+      myWans.forEach(w=>{
+        const wIp=w.fromId===loc.id?w.ipFrom:w.ipTo;
+        cfg+=` network ${networkAddr(wIp,wanMask)} ${wildcardMask(wanMask)} area 0\n`;
+      });
+      if(isL3){
+        cfg+=` network ${networkAddr(transit.router,transit.mask)} ${wildcardMask(transit.mask)} area 0\n`;
+      } else {
+        subsWithIp.forEach(s=>cfg+=` network ${networkAddr(s.gwIp,lanMask)} ${wildcardMask(lanMask)} area 0\n`);
+        if(!multiSub&&loc.lanIf) cfg+=` passive-interface ${loc.lanIf}\n`;
+        else subsWithIp.forEach((_,i)=>cfg+=` passive-interface ${loc.lanIf||'GigabitEthernet0/0/0'}.${(i+1)*10}\n`);
+      }
+      cfg+=`!\n`;
+    } else {
+      const allRoutes=[...remoteSubnets];
+      if(isL3) subsWithIp.forEach(s=>{
+        const net=networkAddr(s.gwIp,lanMask);
+        if(!allRoutes.find(r=>r.net===net)) allRoutes.push({net,mask:lanMask,via:transit.sw});
+      });
+      if(allRoutes.length){
+        cfg+=`! Static routes\n`;
+        allRoutes.forEach(r=>cfg+=`ip route ${r.net} ${r.mask} ${r.via}\n`);
+        cfg+=`!\n`;
+      }
+    }
+
+    cfg+=`line con 0\n password cisco\n login\n!\nline vty 0 4\n password cisco\n login\n transport input all\n!\nservice password-encryption\n!\nend\nwrite memory\n`;
+    sections[`loc-${loc.id}`]=cfg; allParts.push(cfg);
+
+    const tab=document.createElement('div');
+    tab.className='tab'; tab.dataset.key=`loc-${loc.id}`; tab.textContent=loc.routerName||loc.name||'Router';
+    tab.addEventListener('click',()=>showTab(`loc-${loc.id}`));
+    tabBar.appendChild(tab);
+
+    // ════════════════════════════════
+    //  SWITCHES
+    // ════════════════════════════════
+    const distName=`SW-${loc.name}-DIST`;
+    const vlanIds=subsWithIp.map((_,i)=>(i+1)*10);
+
+    if(!subsWithIp.length) {
+      // no subnets
+    } else if(!multiSub && !isL3) {
+      const sw=subsWithIp[0];
+      if(sw.switchName){
+        let sc=swHeader(sw.switchName,loc.name,sw.name,'L2 – Catalyst 2960');
+        sc+=`interface range FastEthernet0/1-24\n switchport mode access\n!\ninterface GigabitEthernet0/1\n switchport mode access\n!\n`;
+        sc+=swFooter();
+        allSwitchParts.push(sc);
+      }
+    } else if(isL3) {
+      let dc=swHeader(distName,loc.name,'Distribution','L3 – Catalyst 3560/3650 – ip routing');
+      dc+=`ip routing\n!\n`;
+      if(multiSub) subsWithIp.forEach((s,i)=>{ dc+=`vlan ${vlanIds[i]}\n name ${safe(s.name||`VLAN${vlanIds[i]}`)}\n!\n`; });
+      dc+=`! Routed uplink to router (transit${transit.net}/30)\ninterface GigabitEthernet0/1\n no switchport\n ip address ${transit.sw} ${transit.mask}\n no shutdown\n!\n`;
+      if(multiSub){
+        subsWithIp.forEach((s,i)=>{
+          dc+=`! SVI – gateway for ${s.name||`VLAN${vlanIds[i]}`}\ninterface Vlan${vlanIds[i]}\n ip address ${s.gwIp} ${lanMask}\n no shutdown\n!\n`;
+        });
+        subsWithIp.forEach((s,i)=>{
+          dc+=`! Downlink to ${s.switchName||`SW-${i+1}`} (VLAN ${vlanIds[i]})\ninterface GigabitEthernet0/${i+2}\n switchport mode access\n switchport access vlan ${vlanIds[i]}\n no shutdown\n!\n`;
+        });
+      } else {
+        const s=subsWithIp[0];
+        dc+=`interface Vlan1\n ip address ${s.gwIp} ${lanMask}\n no shutdown\n!\n`;
+        dc+=`! Downlink to ${s.switchName||'SW-1'}\ninterface GigabitEthernet0/2\n switchport mode access\n no shutdown\n!\n`;
+      }
+      // DHCP on L3 switch
+      dc+=`! DHCP pools (on L3 switch)\n`;
+      subsWithIp.forEach(s=>{
+        const cnt=totalDevices(s), base=s.gwIp.replace(/\.\d+$/,'');
+        const pool=safe(s.name||'POOL').toUpperCase().substring(0,20);
+        dc+=`ip dhcp excluded-address ${s.gwIp}\n`;
+        if(cnt>0) dc+=`ip dhcp excluded-address ${base}.10 ${base}.${9+cnt}\n`;
+        dc+=`!\nip dhcp pool ${pool}\n network ${networkAddr(s.gwIp,lanMask)} ${lanMask}\n default-router ${s.gwIp}\n dns-server 8.8.8.8\n!\n`;
+      });
+      if(routingProtocol==='ospf'){
+        dc+=`! OSPF area 0 (L3 switch participates)\nrouter ospf 1\n router-id ${transit.sw}\n`;
+        dc+=` network ${networkAddr(transit.sw,transit.mask)} ${wildcardMask(transit.mask)} area 0\n`;
+        subsWithIp.forEach(s=>dc+=` network ${networkAddr(s.gwIp,lanMask)} ${wildcardMask(lanMask)} area 0\n`);
+        if(multiSub) subsWithIp.forEach((_,i)=>dc+=` passive-interface Vlan${vlanIds[i]}\n`);
+        else dc+=` passive-interface Vlan1\n`;
+        dc+=`!\n`;
+      } else {
+        dc+=`! Default route to router (for inter-site traffic)\nip route 0.0.0.0 0.0.0.0 ${transit.router}\n!\n`;
+      }
+      dc+=swFooter();
+      allSwitchParts.push(dc);
+
+      subsWithIp.forEach((s,i)=>{
+        if(!s.switchName) return;
+        const vlan=multiSub?vlanIds[i]:1;
+        let sc=swHeader(s.switchName,loc.name,s.name||`VLAN ${vlan}`,'L2 – Catalyst 2960');
+        if(multiSub){
+          sc+=`vlan ${vlan}\n name ${safe(s.name||`VLAN${vlan}`)}\n!\n`;
+          sc+=`interface GigabitEthernet0/1\n switchport mode access\n switchport access vlan ${vlan}\n no shutdown\n!\n`;
+          sc+=`interface range FastEthernet0/1-24\n switchport mode access\n switchport access vlan ${vlan}\n!\n`;
+        } else {
+          sc+=`interface GigabitEthernet0/1\n switchport mode access\n no shutdown\n!\n`;
+          sc+=`interface range FastEthernet0/1-24\n switchport mode access\n!\n`;
+        }
+        sc+=swFooter();
+        allSwitchParts.push(sc);
+      });
+
+    } else {
+      let dc=swHeader(distName,loc.name,'Distribution','L2 – Catalyst 2960 – Trunk/Distribution');
+      subsWithIp.forEach((s,i)=>{ dc+=`vlan ${vlanIds[i]}\n name ${safe(s.name||`VLAN${vlanIds[i]}`)}\n!\n`; });
+      dc+=`! Uplink to router (trunk)\ninterface GigabitEthernet0/1\n switchport mode trunk\n switchport trunk allowed vlan ${vlanIds.join(',')}\n!\n`;
+      subsWithIp.forEach((s,i)=>{
+        dc+=`! Downlink to ${s.switchName||`SW-${i+1}`} (VLAN ${vlanIds[i]})\ninterface GigabitEthernet0/${i+2}\n switchport mode trunk\n switchport trunk allowed vlan ${vlanIds[i]}\n!\n`;
+      });
+      dc+=swFooter();
+      allSwitchParts.push(dc);
+      subsWithIp.forEach((s,i)=>{
+        if(!s.switchName) return;
+        const vlan=vlanIds[i];
+        let sc=swHeader(s.switchName,loc.name,s.name||`VLAN ${vlan}`,'L2 – Catalyst 2960');
+        sc+=`vlan ${vlan}\n name ${safe(s.name||`VLAN${vlan}`)}\n!\n`;
+        sc+=`! Uplink to ${distName}\ninterface GigabitEthernet0/1\n switchport mode trunk\n switchport trunk allowed vlan ${vlan}\n no shutdown\n!\n`;
+        sc+=`! Access ports for devices\ninterface range FastEthernet0/1-24\n switchport mode access\n switchport access vlan ${vlan}\n!\n`;
+        sc+=swFooter();
+        allSwitchParts.push(sc);
+      });
+    }
+  }); // end locations
+
+  if(allSwitchParts.length){
+    sections['switches']=allSwitchParts.join('\n\n'); allParts.push(sections['switches']);
+    const swTab=document.createElement('div'); swTab.className='tab'; swTab.dataset.key='switches'; swTab.textContent='Switches';
+    swTab.addEventListener('click',()=>showTab('switches')); tabBar.appendChild(swTab);
+  }
+
+  // PC Setup
+  let pcs=`! ${'═'.repeat(56)}\n! PC / Laptop / Server – IP Configuration Guide\n! ${'═'.repeat(56)}\n! Packet Tracer: click device → Desktop → IP Configuration\n!\n`;
+  locations.forEach(loc=>{
+    if(!loc.subnets.length) return;
+    pcs+=`! ══ ${loc.name} (${loc.routerName}) ══\n!\n`;
+    loc.subnets.forEach(s=>{
+      if(!s.gwIp) return;
+      const entries = allDeviceIps(s.gwIp, s.devices||[]);
+      const cnt = entries.length;
+      pcs+=`! ── ${s.name||'Subnet'} → ${s.switchName||'switch'} (${deviceSummary(s)}) ──\n`;
+      pcs+=`! Gateway  : ${s.gwIp}\n! Netmask  : ${v('lanMask')}\n! DNS      : 8.8.8.8\n!\n`;
+      entries.forEach(e=>{
+        const padded=e.label.padEnd(16);
+        pcs+=`! ${padded}  IP: ${e.ip.padEnd(16)} Mask: ${v('lanMask')}  GW: ${s.gwIp}  DNS: 8.8.8.8\n`;
+      });
+      pcs+=`!\n`;
+    });
+  });
+  if(locations.length>0){
+    pcs+=`! ── Topology ──\n`;
+    locations.forEach(loc=>{
+      const isL3=loc.switchType==='l3';
+      const sw=isL3?'L3 (3560) → SVIs are gateways':'L2 (2960) → Router-on-a-Stick';
+      pcs+=`! ${loc.name}: ${ROUTER_MODELS[loc.routerModel]?.label||loc.routerModel} | Switch: ${sw}\n`;
+    });
+    pcs+=`! Routing: ${routingProtocol==='ospf'?'OSPF area 0':'Static routes'}\n`;
+  }
+  sections['pcs']=pcs; allParts.push(pcs);
+  const pcTab=document.createElement('div'); pcTab.className='tab'; pcTab.dataset.key='pcs'; pcTab.textContent='PC Setup';
+  pcTab.addEventListener('click',()=>showTab('pcs')); tabBar.appendChild(pcTab);
+
+  const routerCount=locations.length, swCount=allSwitchParts.length;
+  const devCount=locations.reduce((a,l)=>a+l.subnets.reduce((b,s)=>b+totalDevices(s),0),0);
+  sections.all=allParts.join('\n\n');
+  showTab('all');
+  document.getElementById('statusMsg').textContent=`✓ ${routerCount} routers · ${swCount} switches · ${devCount} devices · ${routingProtocol.toUpperCase()} · ${new Date().toLocaleTimeString()}`;
+}
+
+// Switch config helpers
+function safe(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+function swHeader(hostname,site,role,type){
+  return `! ${'─'.repeat(56)}\n! SWITCH : ${hostname}\n! Site   : ${site}  |  ${role}\n! Type   : ${type}\n! ${'─'.repeat(56)}\nenable\nconfigure terminal\n!\nhostname ${hostname}\n!\nenable secret cisco\n!\nno ip domain-lookup\n!\n`;
+}
+function swFooter(){return `line con 0\n password cisco\n login\n!\nend\nwrite memory\n`;}
+
+function outputEl(txt){document.getElementById('output').textContent=txt;}
+function showTab(key){
+  activeTab=key;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.key===key));
+  document.getElementById('output').textContent=sections[key]||'// Generate first';
+}
+
+// ═══════════════════════════════════════════════
+//  PILLS
+// ═══════════════════════════════════════════════
+function updatePills(){
+  const ts=locations.reduce((a,l)=>a+l.subnets.length,0);
+  const setP=(id,val,active)=>{const e=document.getElementById(id);e.textContent=val;e.className='pill'+(active?' active':'');};
+  setP('pillLoc',`${locations.length} location${locations.length!==1?'s':''}`,locations.length);
+  setP('pillSubnet',`${ts} subnet${ts!==1?'s':''}`,ts);
+  setP('pillWan',`${wanLinks.length} WAN link${wanLinks.length!==1?'s':''}`,wanLinks.length);
+  document.getElementById('locCount').textContent=locations.length;
+  document.getElementById('wanCount').textContent=wanLinks.length;
+}
+
+// ═══════════════════════════════════════════════
+//  PRESETS
+// ═══════════════════════════════════════════════
+const BUILTIN_PRESETS = {
+  blank:{label:'Blank (new project)',routingProtocol:'static',
+    locations:[
+      {name:'SITE-A',routerName:'Router-A',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'192.168.1.1',subnets:[{name:'Department 1',switchName:'SW-A-1',gwIp:'192.168.1.1',devices:[{type:'PC',count:3}]}]},
+      {name:'SITE-B',routerName:'Router-B',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'192.168.2.1',subnets:[{name:'Department 1',switchName:'SW-B-1',gwIp:'192.168.2.1',devices:[{type:'PC',count:3}]}]},
+    ]},
+  cloudy:{label:'Cloudy Nerds / High Clouds',routingProtocol:'static',
+    locations:[
+      {name:'KVG',routerName:'Router-KVG',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'192.168.1.1',subnets:[
+        {name:'Management & Tech Support',switchName:'SW-KVG-1',gwIp:'192.168.1.1',devices:[{type:'PC',count:3},{type:'Printer',count:1}]},
+        {name:'Design & Finance',         switchName:'SW-KVG-2',gwIp:'192.168.2.1',devices:[{type:'Laptop',count:3}]},
+        {name:'Consultants, Dev & Sales', switchName:'SW-KVG-3',gwIp:'192.168.3.1',devices:[{type:'PC',count:4},{type:'Laptop',count:1}]},
+      ]},
+      {name:'BOD',routerName:'Router-BOD',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'192.168.4.1',subnets:[
+        {name:'Management & Tech Support',switchName:'SW-BOD-1',gwIp:'192.168.4.1',devices:[{type:'PC',count:3},{type:'Printer',count:1}]},
+        {name:'HR & Consultants',         switchName:'SW-BOD-2',gwIp:'192.168.5.1',devices:[{type:'Laptop',count:3}]},
+        {name:'Developers & Sales',       switchName:'SW-BOD-3',gwIp:'192.168.6.1',devices:[{type:'PC',count:4},{type:'Laptop',count:1}]},
+      ]},
+    ]},
+  l3demo:{label:'L3 Switch Demo (3560)',routingProtocol:'ospf',
+    locations:[
+      {name:'HQ',routerName:'Router-HQ',routerModel:'ISR4331',switchType:'l3',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[
+        {name:'Management', switchName:'SW-HQ-MGMT',gwIp:'192.168.1.1',devices:[{type:'PC',count:2},{type:'Printer',count:1}]},
+        {name:'Servers',    switchName:'SW-HQ-SRV', gwIp:'192.168.2.1',devices:[{type:'Server',count:2}]},
+        {name:'Employees',  switchName:'SW-HQ-EMP', gwIp:'192.168.3.1',devices:[{type:'Laptop',count:4},{type:'IP Phone',count:2}]},
+      ]},
+      {name:'BRANCH',routerName:'Router-BR',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[
+        {name:'Branch Office',switchName:'SW-BR-1',gwIp:'192.168.10.1',devices:[{type:'PC',count:3},{type:'IP Phone',count:1}]},
+      ]},
+    ]},
+  chain3:{label:'3-location chain (OSPF)',routingProtocol:'ospf',
+    locations:[
+      {name:'OSLO',     routerName:'Router-OSL',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[{name:'Oslo Office',  switchName:'SW-OSL-1',gwIp:'192.168.1.1',devices:[{type:'PC',count:3},{type:'Laptop',count:1}]}]},
+      {name:'BERGEN',   routerName:'Router-BGO',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[{name:'Bergen Office',switchName:'SW-BGO-1',gwIp:'192.168.2.1',devices:[{type:'Laptop',count:2},{type:'PC',count:1}]}]},
+      {name:'TRONDHEIM',routerName:'Router-TRD',routerModel:'ISR4331',switchType:'l2',lanIf:'GigabitEthernet0/0/0',serialIf:'Serial0/1/0',lanIp:'',subnets:[{name:'TRD Office',  switchName:'SW-TRD-1',gwIp:'192.168.3.1',devices:[{type:'PC',count:2},{type:'IP Phone',count:1}]}]},
+    ]},
+};
+
+function populatePresetDropdown(){
+  const sel=document.getElementById('presetSel');
+  let h='<option value="">-- select preset --</option><optgroup label="Built-in">';
+  Object.entries(BUILTIN_PRESETS).forEach(([k,p])=>h+=`<option value="${k}">${p.label}</option>`);
+  h+='</optgroup>';
+  const custom=getCustomPresets();
+  if(custom.length){h+='<optgroup label="My presets">'; custom.forEach(p=>h+=`<option value="${p.key}">★ ${p.name}</option>`); h+='</optgroup>';}
+  sel.innerHTML=h;
+}
+function getCustomPresets(){try{return JSON.parse(localStorage.getItem('cisco_presets')||'[]');}catch{return[];}}
+
+function savePreset(){
+  const name=prompt('Preset name:'); if(!name?.trim()) return;
+  const key='custom_'+Date.now(), custom=getCustomPresets();
+  custom.push({key,name:name.trim(),data:{
+    routingProtocol,
+    locations:locations.map(l=>({name:l.name,routerName:l.routerName,routerModel:l.routerModel,switchType:l.switchType,lanIf:l.lanIf,serialIf:l.serialIf,lanIp:l.lanIp,
+      subnets:l.subnets.map(s=>({name:s.name,switchName:s.switchName,gwIp:s.gwIp,devices:s.devices.map(d=>({type:d.type,count:d.count}))}))}))
+  }});
+  localStorage.setItem('cisco_presets',JSON.stringify(custom));
+  populatePresetDropdown();
+  document.getElementById('presetSel').value=key;
+  document.getElementById('statusMsg').textContent=`✓ Preset "${name.trim()}" saved`;
+}
+
+function loadPreset(key){
+  const custom=getCustomPresets().find(p=>p.key===key);
+  const p=custom?custom.data:BUILTIN_PRESETS[key]; if(!p) return;
+  locations=[]; wanLinks=[]; locIdSeq=subIdSeq=wanIdSeq=0;
+  (p.locations||[]).forEach(l=>addLocation(l));
+  setWanMode('auto');
+  setRoutingProtocol(p.routingProtocol||'static');
+  updateMaskHints();
+}
+
+function updateMaskHints(){
+  const wm=v('wanMask'), lm=v('lanMask');
+  document.getElementById('wanMaskHint').textContent=`${cidrLen(wm)} – ${maskHosts(wm)} usable addresses, point-to-point`;
+  document.getElementById('lanMaskHint').textContent=`${cidrLen(lm)} – ${maskHosts(lm)} usable addresses`;
+}
+
+// ═══════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════════
+function exportProject(){
+  const data={version:'2.0',routingProtocol,wanMode,
+    locations:locations.map(l=>({name:l.name,routerName:l.routerName,routerModel:l.routerModel,switchType:l.switchType,lanIf:l.lanIf,serialIf:l.serialIf,lanIp:l.lanIp,
+      subnets:l.subnets.map(s=>({name:s.name,switchName:s.switchName,gwIp:s.gwIp,devices:s.devices.map(d=>({type:d.type,count:d.count}))}))}))};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=(locations[0]?.name||'project').toLowerCase()+'-cisco.json'; a.click();
+}
+function importProject(file){
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      locations=[]; wanLinks=[]; locIdSeq=subIdSeq=wanIdSeq=0;
+      (d.locations||[]).forEach(l=>addLocation(l));
+      setWanMode(d.wanMode||'auto');
+      setRoutingProtocol(d.routingProtocol||'static');
+      updateMaskHints();
+      document.getElementById('statusMsg').textContent='✓ Project imported';
+    }catch{alert('Invalid JSON file');}
+  };
+  r.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════
+//  EVENTS
+// ═══════════════════════════════════════════════
+document.getElementById('addLocBtn').addEventListener('click',()=>addLocation());
+document.getElementById('generateBtn').addEventListener('click',generate);
+document.getElementById('addWanBtn').addEventListener('click',addManualWan);
+document.getElementById('loadPresetBtn').addEventListener('click',()=>{const k=v('presetSel');if(k)loadPreset(k);});
+document.getElementById('savePresetBtn').addEventListener('click',savePreset);
+document.getElementById('exportBtn').addEventListener('click',exportProject);
+document.getElementById('importFile').addEventListener('change',e=>importProject(e.target.files[0]));
+document.getElementById('wanMask').addEventListener('change',updateMaskHints);
+document.getElementById('lanMask').addEventListener('change',updateMaskHints);
+document.getElementById('copyBtn').addEventListener('click',async()=>{
+  try{
+    await navigator.clipboard.writeText(document.getElementById('output').textContent);
+    const b=document.getElementById('copyBtn'); b.textContent='✓ Copied!';
+    setTimeout(()=>b.textContent='Copy',2000);
+  }catch{alert('Select and copy manually');}
+});
+document.getElementById('downloadBtn').addEventListener('click',()=>{
+  const name=(locations[0]?.routerName)||'cisco-config';
+  const blob=new Blob([document.getElementById('output').textContent],{type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name+'-config.txt'; a.click();
+});
+
+// ═══════════════════════════════════════════════
+//  DRAGGABLE RESIZER
+// ═══════════════════════════════════════════════
+(function(){
+  const resizer = document.getElementById('resizer');
+  const leftPanel = document.querySelector('.left');
+  let dragging = false, startX = 0, startW = 0;
+  resizer.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startW = leftPanel.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.max(260, Math.min(startW + e.clientX - startX, window.innerWidth - 260));
+    leftPanel.style.width = w + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    resizer.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
+// Boot
+populatePresetDropdown();
+loadPreset('blank');
+updateMaskHints();
+</script>
 </body>
 </html>

@@ -1,106 +1,74 @@
 # Cisco Config Generator
 
-A browser-based tool for generating Cisco IOS / IOS-XE / Packet Tracer configuration for multi-site networks. No installation required — open the HTML file directly in any modern browser.
+A single-file web app that generates complete **Cisco Packet Tracer** configurations — routers, switches, VLANs, DHCP, routing and PC setup — all from a clean visual interface.
+
+No installation. No dependencies. Just open the HTML file in a browser.
 
 ---
 
-## Versions
+## Features
 
-| File | Description |
+- **Router config** — hostname, interfaces, WAN serial links, passwords, banner motd, `no ip domain-lookup`
+- **Router-on-a-Stick** — automatic sub-interface + dot1Q config for L2 multi-subnet setups
+- **L3 Switch (Catalyst 3560/3650)** — `ip routing`, SVIs as gateways, routed uplink via `/30` transit subnet, DHCP on switch
+- **L2 Switch (Catalyst 2960)** — trunk/access ports, VLAN config, distribution + access switch hierarchy
+- **DHCP** — pools with excluded ranges auto-calculated from device count
+- **Routing protocols** — Static routes or OSPF area 0 (routers + L3 switches)
+- **Multiple device types per subnet** — e.g. `2× PC + 1× Laptop + 1× Printer`
+- **PC Setup guide** — full IP/mask/gateway/DNS list for every device, ready for Packet Tracer
+- **Router models** — ISR 4331 ★, ISR 2901, ISR 1941, Cisco 2811 (auto-fills interface names)
+- **Switch models** — Catalyst 2960 (L2) ★, 3560 (L3), 3650 (L3)
+- **WAN topology** — Auto chain (A→B→C→D) or fully manual
+- **Subnet masks** — dropdown with recommended options; `/30` enforced on WAN
+- **Presets** — built-in examples + save/load your own via localStorage
+- **Export / Import** — save and share projects as JSON
+- **Draggable panel divider** — resize the config output panel to your liking
+- **Hover tooltips** — every field has a "What / Why" explanation
+
+---
+
+## Usage
+
+### Option A — Open locally
+Download [`index.html`](index.html) and open it in any modern browser.
+
+### Option B — GitHub Pages
+Visit the live version at:
+**https://[your-username].github.io/cisco-config-generator/**
+
+---
+
+## How it works
+
+1. Add one or more **locations** (each gets a router + switch)
+2. Add **subnets** per location with gateway IP and device types
+3. Add **WAN links** between routers (auto or manual)
+4. Click **⚡ Generate Configuration**
+5. Use the tabs to browse configs per device, copy or download
+
+---
+
+## Supported Cisco devices
+
+| Device | Models |
 |---|---|
-| `cisco-config-generator-v7.html` | Full-featured v7 — multi-site, L2/L3 switches, OSPF/Static, presets, import/export |
-| `index.html` | Simple single-device config generator with dropdown menus |
-
-The active version served at `localhost:5500` is **v7** (`cisco-config-generator-v7.html` in Downloads).
-
----
-
-## Features (v7)
-
-- **Multi-site topology** — add as many locations as needed
-- **Dropdown menus** for router model, switch model, subnet mask, routing protocol, WAN topology mode, and device types
-- **L2 and L3 switch support**
-  - L2 (Catalyst 2960): Router-on-a-Stick with trunk/access VLANs
-  - L3 (Catalyst 3560/3650): SVI-based inter-VLAN routing
-- **Routing protocols**: Static routes or OSPF area 0
-- **WAN topology modes**: Auto (chain A→B→C) or Manual (define each link)
-- **DHCP pools** auto-generated per subnet
-- **PC Setup tab** — IP configuration guide for all end devices
-- **Presets** — built-in examples + save/load custom presets
-- **Export / Import** — save and restore projects as JSON
-- **Copy** and **Download .txt** for generated configs
-- **Draggable panel resizer**
+| Router | ISR 4331, ISR 2901, ISR 1941, 2811 |
+| L2 Switch | Catalyst 2960 |
+| L3 Switch | Catalyst 3560, Catalyst 3650 |
 
 ---
 
-## Supported Router Models
-
-| Model | LAN Interface | Serial Interface |
-|---|---|---|
-| Cisco ISR 4331 ★ | GigabitEthernet0/0/0 | Serial0/1/0 |
-| Cisco ISR 2901 | GigabitEthernet0/0 | Serial0/0/0 |
-| Cisco ISR 1941 | GigabitEthernet0/0 | Serial0/0/0 |
-| Cisco 2811 | FastEthernet0/0 | Serial0/0/0 |
-
-## Supported Switch Models
-
-| Model | Type |
-|---|---|
-| Catalyst 2960 ★ | L2 (trunk/access) |
-| Catalyst 3560 | L3 (ip routing + SVIs) |
-| Catalyst 3650 | L3 (ip routing + SVIs) |
-
----
-
-## Built-in Presets
+## Built-in presets
 
 | Preset | Description |
 |---|---|
-| Blank (new project) | 2-site starter with Static routing |
-| Cloudy Nerds / High Clouds | 2-site with 3 subnets each |
-| L3 Switch Demo (3560) | HQ + Branch using OSPF and L3 switching |
-| 3-location chain (OSPF) | 3-site chain with OSPF area 0 |
+| Blank | Two empty sites to get started |
+| Cloudy Nerds / High Clouds | Two sites, 3 subnets each, mixed device types |
+| L3 Switch Demo | HQ with Catalyst 3560 + OSPF |
+| 3-site chain (OSPF) | Oslo → Bergen → Trondheim |
 
 ---
 
-## How to Use (v7)
+## License
 
-1. Open `cisco-config-generator-v7.html` in a browser (or use the live server at `localhost:5500`).
-2. Select a **Preset** to load an example, or start from scratch with **Add Location**.
-3. Set **Global Settings** — WAN/LAN subnet masks and routing protocol.
-4. Configure each location: location code, router hostname, router model, switch model, interfaces, and subnets.
-5. Add **devices** (PC, Laptop, Server, Printer, IP Phone) per subnet.
-6. Click **⚡ Generate Configuration**.
-7. Use the tabs to view configs per device. Click **Copy** or **Download .txt**.
-
----
-
-## How to Use (Simple — index.html)
-
-1. Open `index.html` in a browser.
-2. Fill in device settings, interface details, routing, and management options using the dropdown menus.
-3. Click **Generate Config** and copy the output.
-
----
-
-## File Structure
-
-```
-Cisco config generator/          ← project root (served at localhost:5500)
-├── .claude/launch.json          ← dev server config (Python http.server → Downloads/)
-└── README.md                    ← this file
-
-C:/Users/chris/Downloads/
-├── cisco-config-generator-v7.html   ← main app (all English, fully translated)
-├── cisco-config-generator-v6.html   ← previous versions
-└── ...
-```
-
----
-
-## Notes
-
-- Generated configs are designed for **Cisco Packet Tracer** but also work as a starting point for real IOS devices.
-- The `enable secret` and line passwords are set to `cisco` — change these before deploying.
-- VLAN IDs are auto-assigned as 10, 20, 30… per subnet order within a location.
-- Transit subnets for L3 switches use the `172.16.x.0/30` range.
+MIT — see [LICENSE](LICENSE)
